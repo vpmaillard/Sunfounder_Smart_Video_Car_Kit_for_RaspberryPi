@@ -2,13 +2,53 @@
 # -*- coding: utf-8 -*-
 from Tkinter import *
 from socket import *      # Import necessary modules
+import urllib
+import cv2
+import numpy as np
+import time
+from keras.models import Sequential
+from keras.layers import Dense
+
+# urllib.urlretrieve("http://192.168.1.117:8080/?action=snapshot", "test.jpg")
+# How it is going to work:
+#-------------------------
+
+# Status variable is used: status = -1,0,1 for left, forward, right respectively.
+# Status is update on each key press and key release.
+# The loop function in the TK loop function, we take a screenshot at a given frequency.
+
+# Important key release setting
+#   xset r off	Turn off automatic key releases.
+#	xset r on	Turn on automatic key releases.
+# This is useful to train the model and monitor the supervised model (On state, going forward left or right.)
+
 
 ctrl_cmd = ['forward', 'backward', 'left', 'right', 'stop', 'read cpu_temp', 'home', 'distance', 'x+', 'x-', 'y+', 'y-', 'xy_home']
 
 top = Tk()   # Create a top window
-top.title('Sunfounder Raspberry Pi Smart Video Car')
+top.title('Control Center')
 
-HOST = '192.168.0.147'    # Server(Raspberry Pi) IP address
+status = 0 # 0=forward, -1=left, +1=right
+is_it_on = False
+file_iteration = '../screenshots/iteration.txt'
+iteration = 1 #Rather read in a file the number ?
+f = open(file_iteration, 'r')
+iteration = f.readlines()
+iteration = int(iteration[0]) + 1
+f.close()
+
+# Loading the Neural Network:
+#----------------------------
+json_file = open('../neural_network/model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+# load weights into new model
+loaded_model.load_weights("../neural_network/model.h5")
+loaded_model.compile(loss='sparse_categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+
+
+HOST = '192.168.1.117'    # Server(Raspberry Pi) IP address
 PORT = 21567
 BUFSIZ = 1024             # buffer size
 ADDR = (HOST, PORT)
@@ -16,12 +56,57 @@ ADDR = (HOST, PORT)
 tcpCliSock = socket(AF_INET, SOCK_STREAM)   # Create a socket
 tcpCliSock.connect(ADDR)                    # Connect with the server
 
+
+# =============================================================================
+# Taking screenshots with the car on a regular basis.
+#==============================================================================
+def image_resize(image, size=(32,32)):
+	return cv2.resize(image, size).flatten()
+
+def taking_screenshot():
+	global status, is_it_on, iteration
+	if is_it_on:
+		if status == -1:
+			urllib.urlretrieve("http://192.168.1.117:8080/?action=snapshot", '../screenshots/left_' + str(iteration) + '.jpg')
+		if status == 1:
+			urllib.urlretrieve("http://192.168.1.117:8080/?action=snapshot", '../screenshots/right_' + str(iteration) + '.jpg')
+		else:
+			urllib.urlretrieve("http://192.168.1.117:8080/?action=snapshot", '../screenshots/normal_' + str(iteration) + '.jpg')
+		iteration = iteration + 1
+		print 'Screenshot taken bro'
+	top.after(200, taking_screenshot)
+
+def driving():
+	# Driving the car bro:
+	image = urllib.urlopen('http://answers.opencv.org/upfiles/logo_2.png')
+	image = np.asarray(bytearray(image.read()), dtype=np.uint8)
+	image = cv2.imdecode(image, -1)
+	image = np.array(image_resize(image)) / 255
+
+	# Use the neural network to get directions:
+	global loaded_model
+	direction = loaded_model.predict(image)
+
+	# Turn whichever direction you need:
+	if direction == 0:
+		# Turn left:
+		tcpCliSock.send('left')
+	elif direction == 1:
+		tcpCliSock.send('forward')
+	elif direction == 2:
+		tcpCliSock.send('right')
+	else:
+		tcpCliSock.send('right')
+	top.after(200, driving)
+
 # =============================================================================
 # The function is to send the command forward to the server, so as to make the 
 # car move forward.
 # ============================================================================= 
 def forward_fun(event):
 	print 'forward'
+	global is_it_on
+	is_it_on = True
 	tcpCliSock.send('forward')
 
 def backward_fun(event):
@@ -30,18 +115,26 @@ def backward_fun(event):
 
 def left_fun(event):
 	print 'left'
+	global status
+	status = -1
 	tcpCliSock.send('left')
 
 def right_fun(event):
 	print 'right'
+	global status
+	status = 1
 	tcpCliSock.send('right')
 
 def stop_fun(event):
 	print 'stop'
+	global is_it_on
+	is_it_on = False
 	tcpCliSock.send('stop')
 
 def home_fun(event):
 	print 'home'
+	global status
+	status = 0
 	tcpCliSock.send('home')
 
 def x_increase(event):
@@ -165,13 +258,19 @@ def changeSpeed(ev=None):
 
 label = Label(top, text='Speed:', fg='red')  # Create a label
 label.grid(row=6, column=0)                  # Label layout
-
 speed = Scale(top, from_=0, to=100, orient=HORIZONTAL, command=changeSpeed)  # Create a scale
 speed.set(50)
 speed.grid(row=6, column=1)
 
 def main():
+	top.after(200, taking_screenshot)
+	#top.after(200, driving) Comment out to kick off autopilot.
 	top.mainloop()
+
+	# Print number of iteration to file:
+	f = open(file_iteration, 'w')
+	f.write(str(iteration))
+	f.close()
 
 if __name__ == '__main__':
 	main()
