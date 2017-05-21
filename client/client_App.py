@@ -6,8 +6,7 @@ import urllib
 import cv2
 import numpy as np
 import time
-from keras.models import Sequential
-from keras.layers import Dense
+from keras.models import model_from_json
 
 # urllib.urlretrieve("http://192.168.1.117:8080/?action=snapshot", "test.jpg")
 # How it is going to work:
