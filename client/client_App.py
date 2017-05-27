@@ -27,10 +27,12 @@ ctrl_cmd = ['forward', 'backward', 'left', 'right', 'stop', 'read cpu_temp', 'ho
 top = Tk()   # Create a top window
 top.title('Control Center')
 
+# Variables for monitoring screenshots and status of car:
+#--------------------------------------------------------
 status = 0 # 0=forward, -1=left, +1=right
 is_it_on = False
 file_iteration = '../screenshots/iteration.txt'
-iteration = 1 #Rather read in a file the number ?
+iteration = 1
 f = open(file_iteration, 'r')
 iteration = f.readlines()
 iteration = int(iteration[0]) + 1
@@ -47,9 +49,11 @@ loaded_model.load_weights("../neural_network/model.h5")
 loaded_model.compile(loss='sparse_categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
 
+# Connecting to the car:
+#-----------------------
 HOST = '192.168.1.117'    # Server(Raspberry Pi) IP address
 PORT = 21567
-BUFSIZ = 1024             # buffer size
+BUFSIZ = 1024             # buffer si#Rather read in a file the number ?ze
 ADDR = (HOST, PORT)
 
 tcpCliSock = socket(AF_INET, SOCK_STREAM)   # Create a socket
@@ -76,8 +80,8 @@ def taking_screenshot():
 	top.after(200, taking_screenshot)
 
 def driving():
-	# Driving the car bro:
-	image = urllib.urlopen('http://answers.opencv.org/upfiles/logo_2.png')
+	# Driving the car:
+	image = urllib.urlopen('http://192.168.1.117:8080/?action=snapshot')
 	image = np.asarray(bytearray(image.read()), dtype=np.uint8)
 	image = cv2.imdecode(image, -1)
 	image = np.array(image_resize(image)) / 255
@@ -95,7 +99,7 @@ def driving():
 	elif direction == 2:
 		tcpCliSock.send('right')
 	else:
-		tcpCliSock.send('right')
+		tcpCliSock.send('stop')
 	top.after(200, driving)
 
 # =============================================================================

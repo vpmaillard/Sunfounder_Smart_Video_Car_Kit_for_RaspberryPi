@@ -26,20 +26,26 @@ def setup(busnum=None):
 		pwm = servo.PWM(bus_number=busnum) # Initialize the servo controller.
 	pwm.frequency = 60
 
+	# Configuring a PDI:
+	error_rate = 0.3
+	current_angle = 0
+
 # ==========================================================================================
 # Control the servo connected to channel 0 of the servo control board, so as to make the 
 # car turn left.
 # ==========================================================================================
 def turn_left():
-	global leftPWM
-	pwm.write(0, 0, leftPWM)  # CH0
+	global leftPWM, error_rate, current_angle
+	current_angle = current_angle + error_rate * (leftPWM - current_angle)
+	pwm.write(0, 0, current_angle)  # CH0leftPWM
 
 # ==========================================================================================
 # Make the car turn right.
 # ==========================================================================================
 def turn_right():
-	global rightPWM
-	pwm.write(0, 0, rightPWM)
+	global rightPWM, error_rate, current_angle
+	current_angle = current_angle + error_rate * (rightPWM - current_angle)
+	pwm.write(0, 0, current_angle)
 
 # ==========================================================================================
 # Make the car turn back.
