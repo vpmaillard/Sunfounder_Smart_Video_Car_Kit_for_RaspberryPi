@@ -6,7 +6,7 @@ def Map(x, in_min, in_max, out_min, out_max):
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 def setup(busnum=None):
-	global leftPWM, rightPWM, homePWM, pwm
+	global leftPWM, rightPWM, homePWM, pwm, error_rate, current_angle
 	leftPWM = 380 #400
 	homePWM = 450
 	rightPWM = 520 #500
