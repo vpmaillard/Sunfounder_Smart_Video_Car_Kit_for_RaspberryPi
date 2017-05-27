@@ -37,7 +37,7 @@ def setup(busnum=None):
 def turn_left():
 	global leftPWM, error_rate, current_angle
 	current_angle = current_angle + error_rate * (leftPWM - current_angle)
-	pwm.write(0, 0, current_angle)  # CH0leftPWM
+	pwm.write(0, 0, int(current_angle))  # CH0leftPWM
 
 # ==========================================================================================
 # Make the car turn right.
@@ -45,7 +45,7 @@ def turn_left():
 def turn_right():
 	global rightPWM, error_rate, current_angle
 	current_angle = current_angle + error_rate * (rightPWM - current_angle)
-	pwm.write(0, 0, current_angle)
+	pwm.write(0, 0, int(current_angle))
 
 # ==========================================================================================
 # Make the car turn back.
