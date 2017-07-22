@@ -267,7 +267,7 @@ speed.grid(row=6, column=1)
 
 def main():
 	top.after(200, taking_screenshot)
-	#top.after(200, driving) Comment out to kick off autopilot.
+	#top.after(200, driving) Remove comment to kick off autopilot.
 	top.mainloop()
 
 	# Print number of iteration to file:

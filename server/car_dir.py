@@ -27,8 +27,8 @@ def setup(busnum=None):
 	pwm.frequency = 60
 
 	# Configuring a PDI:
-	error_rate = 0.3
-	current_angle = 0
+	error_rate = 0.03
+	current_angle = homePWM
 
 # ==========================================================================================
 # Control the servo connected to channel 0 of the servo control board, so as to make the 
@@ -37,6 +37,7 @@ def setup(busnum=None):
 def turn_left():
 	global leftPWM, error_rate, current_angle
 	current_angle = current_angle + error_rate * (leftPWM - current_angle)
+	print(current_angle)
 	pwm.write(0, 0, int(current_angle))  # CH0leftPWM
 
 # ==========================================================================================
@@ -45,6 +46,7 @@ def turn_left():
 def turn_right():
 	global rightPWM, error_rate, current_angle
 	current_angle = current_angle + error_rate * (rightPWM - current_angle)
+	print(current_angle)
 	pwm.write(0, 0, int(current_angle))
 
 # ==========================================================================================
@@ -56,7 +58,9 @@ def turn(angle):
 	pwm.write(0, 0, angle)
 
 def home():
-	global homePWM
+	global homePWM, error_rate, current_angle
+	current_angle = current_angle + error_rate * (homePWM - current_angle)
+	print(current_angle)
 	pwm.write(0, 0, homePWM)
 
 def calibrate(x):

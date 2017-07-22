@@ -1,4 +1,6 @@
 ## Sunfounder Smart Video Car Kit for Raspberry Pi
+#### Warning:
+Use *xset r off* to turn off a keystroke repeat from your linux terminal. This makes it easier to fit the autopilot.
 
 Quick Links:
 
