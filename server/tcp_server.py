@@ -34,11 +34,25 @@ while True:
 	tcpCliSock, addr = tcpSerSock.accept() 
 	print '...connected from :', addr     # Print the IP address of the client connected with the server.
 
+	# Changing timeout time:
+	tcpSerSock.settimeout(0.3)  # Timeout of 0.1 seconds.
 	# The way direction is by increments. We store what we want to do through the while loop:
 	direction = 'home'
 	while True:
 		data = ''
-		data = tcpCliSock.recv(BUFSIZ)    # Receive data sent from the client.
+		try:
+			data = tcpCliSock.recv(BUFSIZ)    # Receive data sent from the client.
+		except:
+			# Changing direction even if no new order:
+			if direction == 'right':
+				car_dir.turn_right()
+			elif direction == 'left':
+				car_dir.turn_left()
+			elif direction == 'home':
+				car_dir.home()
+			continue
+
+		print(data)
 		# Analyze the command received and control the car accordingly.
 		if not data:
 			break
@@ -119,13 +133,7 @@ while True:
 				print 'ERROR, speed =', spd
 		else:
 			print 'Command Error! Cannot recognize command: ' + data
-		# And now using doing one more partial increment:
-		if direction == 'right':
-			car_dir.turn_right()
-		elif direction == 'left':
-			car_dir.turn_left()
-		elif direction == 'home':
-			car_dir.home()
+
 
 tcpSerSock.close()
 
